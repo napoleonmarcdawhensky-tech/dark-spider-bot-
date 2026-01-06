@@ -1,13 +1,24 @@
+
 import makeWASocket, {
   useMultiFileAuthState,
   DisconnectReason
 } from "@whiskeysockets/baileys";
 import Pino from "pino";
+import ytdl from "ytdl-core";
+import ytSearch from "yt-search";
 
 const PREFIX = ".";
-const OWNER_NUMBER = "242069709368@s.whatsapp.net";
+const OWNER = "50948595759@s.whatsapp.net";
 const BOT_NAME = "DarkSpider_Anya";
 const PAIRING_CODE = "EMERAUDE";
+const POWERED = "\n\nPowered by Dark Émeraude";
+
+const quotes = [
+  "🕷️ Cute face, dark soul.",
+  "🍓 Même l’ombre peut être douce.",
+  "🌙 La nuit protège les âmes sincères.",
+  "🖤 Spider girl veille en silence."
+];
 
 async function startBot() {
   const { state, saveCreds } = await useMultiFileAuthState("./auth");
@@ -20,7 +31,7 @@ async function startBot() {
 
   sock.ev.on("creds.update", saveCreds);
 
-  // ===== PAIRING CODE =====
+  // 🔑 PAIRING
   if (!state.creds.registered) {
     setTimeout(async () => {
       try {
@@ -32,22 +43,17 @@ async function startBot() {
     }, 3000);
   }
 
-  // ===== MESSAGES =====
   sock.ev.on("messages.upsert", async ({ messages }) => {
     const msg = messages[0];
     if (!msg.message || msg.key.fromMe) return;
 
     const from = msg.key.remoteJid;
-
-    // 🔒 MODE PRIVÉ SEULEMENT
-    if (from.endsWith("@g.us")) return;
+    if (from.endsWith("@g.us")) return; // 🔒 privé only
 
     const sender = msg.key.participant || from;
-
-    // 👑 OWNER ONLY
-    if (sender !== OWNER_NUMBER) {
+    if (sender !== OWNER) {
       await sock.sendMessage(from, {
-        text: "⛔ Bot privé.\nOwner uniquement.\n\nPowered by Dark Émeraude"
+        text: "⛔ Bot privé.\nOwner uniquement." + POWERED
       });
       return;
     }
@@ -59,58 +65,21 @@ async function startBot() {
 
     if (!text.startsWith(PREFIX)) return;
 
-    const command = text.slice(1).trim().toLowerCase();
+    const args = text.slice(1).trim().split(/ +/);
+    const command = args.shift().toLowerCase();
 
-    // ===== COMMANDES DE BASE =====
+    // ===== COMMANDES =====
 
     if (command === "ping") {
-      await sock.sendMessage(from, {
-        text: "💓 Pong !\n\nPowered by Dark Émeraude"
-      });
+      await sock.sendMessage(from, { text: "💓 Pong !" + POWERED });
     }
 
     if (command === "alive") {
       await sock.sendMessage(from, {
-        text: `🕷️🍓 ${BOT_NAME} est en ligne.\n\nPowered by Dark Émeraude`
+        text: `🕷️ ${BOT_NAME} est en ligne.` + POWERED
       });
     }
 
-    if (command === "menu") {
-      const menu = `
-╭🕷️🍓 DARK SPIDER GIRL 🍓🕷️
-│ Dev : Dark Émeraude
-│ Bot : ${BOT_NAME}
-│ Prefix : .
-│ Mode : Privé
-╰━━━━━━━━━━━━━━━━━━━━━━━╯
-
-🕷️ GENERAL
-.ping
-.alive
-.menu
-
-🖤 Powered by Dark Émeraude
-`;
-
-      await sock.sendMessage(from, { text: menu });
-    }
-  });
-
-  // ===== CONNEXION =====
-  sock.ev.on("connection.update", (update) => {
-    const { connection, lastDisconnect } = update;
-
-    if (connection === "close") {
-      if (
-        lastDisconnect?.error?.output?.statusCode !==
-        DisconnectReason.loggedOut
-      ) {
-        startBot();
-      }
-    } else if (connection === "open") {
-      console.log("🕷️🍓 DarkSpider_Anya CONNECTÉE");
-    }
-  });
-}
-
-startBot();
+    if (command === "quote") {
+      const q = quotes[Math.floor(Math.random() * quotes.length)];
+      await sock.sendMessage(from, { text
